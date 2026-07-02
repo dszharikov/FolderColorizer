@@ -1,4 +1,5 @@
 using System.Windows;
+using FolderColorizer.Core;
 using FolderColorizer.Services;
 
 namespace FolderColorizer;
@@ -55,6 +56,9 @@ public partial class App : Application
             FolderColor color = FolderPalette.Find(args[1])
                 ?? throw new ArgumentException($"Unknown color: {args[1]}");
             FolderCustomizationService.Apply(args[2], color);
+            ExplorerWindowRefresher.RefreshAfterShellCommand(
+                args[2],
+                FolderColorState.GetIconFileName(color.Id));
             return true;
         }
 
@@ -62,6 +66,9 @@ public partial class App : Application
             args[0].Equals("--reset", StringComparison.OrdinalIgnoreCase))
         {
             FolderCustomizationService.Reset(args[1]);
+            ExplorerWindowRefresher.RefreshAfterShellCommand(
+                args[1],
+                iconFileName: null);
             return true;
         }
 

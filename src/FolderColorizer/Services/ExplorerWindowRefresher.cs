@@ -6,8 +6,34 @@ namespace FolderColorizer.Services;
 
 internal static class ExplorerWindowRefresher
 {
+    private static readonly TimeSpan[] ShellCommandRetryDelays =
+    [
+        TimeSpan.FromMilliseconds(350),
+        TimeSpan.FromMilliseconds(650)
+    ];
+
     public static void RefreshAll()
         => RefreshSafely();
+
+    public static void RefreshAfterShellCommand(
+        string folderPath,
+        string? iconFileName)
+    {
+        string folder = Path.TrimEndingDirectorySeparator(
+            Path.GetFullPath(folderPath));
+
+        foreach (TimeSpan delay in ShellCommandRetryDelays)
+        {
+            Thread.Sleep(delay);
+            if (iconFileName is not null)
+            {
+                ShellFolderSettings.TrySetIcon(folder, iconFileName);
+            }
+
+            ShellNotifier.FolderChanged(folder);
+            RefreshSafely();
+        }
+    }
 
     private static void RefreshSafely()
     {

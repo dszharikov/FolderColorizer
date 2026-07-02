@@ -36,6 +36,7 @@ public static class FolderCustomizationService
         }
 
         DeleteManagedIcons(folder, iconPath);
+        ShellFolderSettings.TrySetIcon(folder, iconFileName);
         ShellNotifier.FolderChanged(folder);
         ExplorerWindowRefresher.RefreshAll();
     }

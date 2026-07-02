@@ -28,7 +28,7 @@ No Explorer extension DLL is injected into the shell process.
 
 ## Install
 
-Download `FolderColorizer-1.0.2-Setup.exe` from
+Download `FolderColorizer-1.0.3-Setup.exe` from
 [Releases](https://github.com/dszharikov/FolderColorizer/releases) and run it.
 The installer is per-user and does not require administrator rights.
 
@@ -59,8 +59,8 @@ Every pushed `v*` tag also creates a GitHub release and attaches the installer
 automatically.
 
 ```powershell
-git tag v1.0.2
-git push origin v1.0.2
+git tag v1.0.3
+git push origin v1.0.3
 ```
 
 To try the context menu from a development build:
@@ -82,7 +82,8 @@ mechanism. It:
    per-size cache;
 3. updates only the icon values in `desktop.ini`, preserving unrelated data;
 4. marks the folder as read-only so Explorer processes its customization;
-5. notifies Windows Shell that the item changed.
+5. applies the icon through Windows `SHGetSetFolderCustomSettings` and
+   refreshes open Explorer views.
 
 The context menu is registered only for the current user under `HKCU`; no
 administrator access or in-process shell extension is needed.
