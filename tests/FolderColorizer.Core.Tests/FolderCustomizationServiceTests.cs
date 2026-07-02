@@ -24,8 +24,22 @@ public sealed class FolderCustomizationServiceTests
                 "IconResource=C:\\Icons\\original.dll,3\r\n" +
                 "InfoTip=Keep me\r\n",
                 new System.Text.UnicodeEncoding(false, true));
+            string legacyIcon = Path.Combine(folder, ".foldercolorizer.ico");
+            File.WriteAllBytes(legacyIcon, [0]);
 
             FolderCustomizationService.Apply(folder, FolderPalette.All[0]);
+            string redIcon = Path.Combine(folder, ".foldercolorizer.red.ico");
+            Assert.True(File.Exists(redIcon));
+            Assert.False(File.Exists(legacyIcon));
+
+            FolderCustomizationService.Apply(folder, FolderPalette.Find("blue")!);
+            string blueIcon = Path.Combine(folder, ".foldercolorizer.blue.ico");
+            Assert.True(File.Exists(blueIcon));
+            Assert.False(File.Exists(redIcon));
+            Assert.Contains(
+                "IconResource=.foldercolorizer.blue.ico,0",
+                File.ReadAllText(desktopIni, System.Text.Encoding.Unicode));
+
             bool changed = FolderCustomizationService.Reset(folder);
 
             string restored = File.ReadAllText(desktopIni, System.Text.Encoding.Unicode);
@@ -33,7 +47,7 @@ public sealed class FolderCustomizationServiceTests
             Assert.Contains("IconResource=C:\\Icons\\original.dll,3", restored);
             Assert.Contains("InfoTip=Keep me", restored);
             Assert.DoesNotContain("FolderColorizer", restored);
-            Assert.False(File.Exists(Path.Combine(folder, ".foldercolorizer.ico")));
+            Assert.False(File.Exists(blueIcon));
             Assert.False(File.GetAttributes(folder).HasFlag(FileAttributes.ReadOnly));
         }
         finally

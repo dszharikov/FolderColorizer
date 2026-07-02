@@ -1,5 +1,5 @@
 #define AppName "Folder Colorizer"
-#define AppVersion "1.0.1"
+#define AppVersion "1.0.2"
 #define AppPublisher "Daniil Zharikov"
 #define AppExeName "FolderColorizer.exe"
 

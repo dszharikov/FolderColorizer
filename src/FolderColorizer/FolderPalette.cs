@@ -8,6 +8,9 @@ public sealed record FolderColor(
 
 public static class FolderPalette
 {
+    public static FolderColor DefaultFolder { get; } =
+        new("default", "Restore default", "#F4B942", "#C98216");
+
     public static IReadOnlyList<FolderColor> All { get; } =
     [
         new("red", "Red", "#EF5350", "#C62828"),

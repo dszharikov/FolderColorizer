@@ -5,6 +5,8 @@ namespace FolderColorizer.Services;
 
 internal static class ContextMenuRegistrar
 {
+    private const string ProductDataDirectoryName = "FolderColorizer";
+    private const string MenuIconsDirectoryName = "MenuIcons";
     private const string ClassesRootKey = @"Software\Classes";
     private const string DirectoryMenuKey = @"Directory\shell\FolderColorizer";
     private const string SubCommandsKey = DirectoryMenuKey + @"\shell";
@@ -16,8 +18,9 @@ internal static class ContextMenuRegistrar
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
         string fullPath = Path.GetFullPath(executablePath);
+        string iconDirectory = EnsureMenuIcons();
         using RegistryKey classesRoot = Registry.CurrentUser.CreateSubKey(ClassesRootKey, true);
-        WriteRegistration(classesRoot, fullPath);
+        WriteRegistration(classesRoot, fullPath, iconDirectory);
         DeleteLegacyCommandStoreCommands();
         ShellNotifier.AssociationsChanged();
     }
@@ -27,15 +30,21 @@ internal static class ContextMenuRegistrar
         using RegistryKey classesRoot = Registry.CurrentUser.CreateSubKey(ClassesRootKey, true);
         DeleteRegistration(classesRoot);
         DeleteLegacyCommandStoreCommands();
+        DeleteMenuIcons();
         ShellNotifier.AssociationsChanged();
     }
 
-    internal static void WriteRegistration(RegistryKey classesRoot, string executablePath)
+    internal static void WriteRegistration(
+        RegistryKey classesRoot,
+        string executablePath,
+        string iconDirectory)
     {
         ArgumentNullException.ThrowIfNull(classesRoot);
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(iconDirectory);
 
         string fullPath = Path.GetFullPath(executablePath);
+        string fullIconDirectory = Path.GetFullPath(iconDirectory);
         string icon = $"\"{fullPath}\",0";
         DeleteRegistration(classesRoot);
         CreateParentMenu(classesRoot, DirectoryMenuKey, icon);
@@ -43,20 +52,24 @@ internal static class ContextMenuRegistrar
         for (int index = 0; index < FolderPalette.All.Count; index++)
         {
             FolderColor color = FolderPalette.All[index];
+            string colorIcon = FormatIconPath(
+                Path.Combine(fullIconDirectory, $"{color.Id}.ico"));
             CreateCommand(
                 classesRoot,
                 $"{index + 1:D2}.{color.Id}",
                 color.DisplayName,
-                icon,
+                colorIcon,
                 $"\"{fullPath}\" --color {color.Id} \"%1\"",
                 separatorBefore: false);
         }
 
+        string defaultIcon = FormatIconPath(
+            Path.Combine(fullIconDirectory, $"{FolderPalette.DefaultFolder.Id}.ico"));
         CreateCommand(
             classesRoot,
             "99.reset",
             "Restore default",
-            icon,
+            defaultIcon,
             $"\"{fullPath}\" --reset \"%1\"",
             separatorBefore: true);
     }
@@ -113,5 +126,80 @@ internal static class ContextMenuRegistrar
         Registry.CurrentUser.DeleteSubKeyTree(
             $@"{LegacyCommandStoreRoot}\FolderColorizer.reset",
             false);
+    }
+
+    private static string EnsureMenuIcons()
+    {
+        string root = GetMenuIconsRoot();
+        string version = typeof(ContextMenuRegistrar).Assembly.GetName().Version?.ToString(3)
+            ?? "current";
+        string directory = Path.Combine(root, version);
+        Directory.CreateDirectory(directory);
+
+        foreach (FolderColor color in FolderPalette.All.Append(FolderPalette.DefaultFolder))
+        {
+            WriteFileAtomically(
+                Path.Combine(directory, $"{color.Id}.ico"),
+                IconGenerator.Create(color));
+        }
+
+        foreach (string obsoleteDirectory in Directory.EnumerateDirectories(root))
+        {
+            if (obsoleteDirectory.Equals(directory, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            TryDeleteDirectory(obsoleteDirectory);
+        }
+
+        return directory;
+    }
+
+    private static void DeleteMenuIcons() => TryDeleteDirectory(GetMenuIconsRoot());
+
+    private static string GetMenuIconsRoot() =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            ProductDataDirectoryName,
+            MenuIconsDirectoryName);
+
+    private static string FormatIconPath(string path) => $"\"{path}\",0";
+
+    private static void WriteFileAtomically(string destination, byte[] content)
+    {
+        string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            File.WriteAllBytes(temporary, content);
+            File.Move(temporary, destination, true);
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+            {
+                File.Delete(temporary);
+            }
+        }
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+            }
+        }
+        catch (IOException)
+        {
+            // Explorer can briefly hold an icon file open. A later registration
+            // or uninstall will retry cleanup without breaking the menu update.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Stale icon files are harmless and should not block unregistration.
+        }
     }
 }

@@ -6,13 +6,31 @@ public static class FolderColorState
 {
     public const string ShellSection = ".ShellClassInfo";
     public const string StateSection = "FolderColorizer";
-    public const string IconFileName = ".foldercolorizer.ico";
+    public const string LegacyIconFileName = ".foldercolorizer.ico";
+    public const string IconFilePrefix = ".foldercolorizer.";
+    public const string IconFileSuffix = ".ico";
 
     private static readonly string[] ManagedKeys = ["IconResource", "IconFile", "IconIndex"];
 
-    public static void Apply(IniDocument document, bool folderWasReadOnly)
+    public static string GetIconFileName(string colorId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(colorId);
+
+        if (colorId.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '-'))
+        {
+            throw new ArgumentException("The color identifier contains invalid characters.", nameof(colorId));
+        }
+
+        return $"{IconFilePrefix}{colorId.ToLowerInvariant()}{IconFileSuffix}";
+    }
+
+    public static void Apply(
+        IniDocument document,
+        bool folderWasReadOnly,
+        string iconFileName)
     {
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(iconFileName);
 
         if (!string.Equals(
                 document.GetValue(StateSection, "Managed"),
@@ -43,8 +61,8 @@ public static class FolderColorState
             }
         }
 
-        document.SetValue(ShellSection, "IconResource", $"{IconFileName},0");
-        document.SetValue(ShellSection, "IconFile", IconFileName);
+        document.SetValue(ShellSection, "IconResource", $"{iconFileName},0");
+        document.SetValue(ShellSection, "IconFile", iconFileName);
         document.SetValue(ShellSection, "IconIndex", "0");
     }
 

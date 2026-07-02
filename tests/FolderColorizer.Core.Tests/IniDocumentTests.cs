@@ -28,7 +28,10 @@ public sealed class IniDocumentTests
             "IconResource=C:\\Icons\\original.dll,3\r\n" +
             "InfoTip=Important folder\r\n");
 
-        FolderColorState.Apply(document, folderWasReadOnly: true);
+        FolderColorState.Apply(
+            document,
+            folderWasReadOnly: true,
+            FolderColorState.GetIconFileName("red"));
         RestoreResult result = FolderColorState.Restore(document);
 
         Assert.True(result.WasManaged);
@@ -49,8 +52,14 @@ public sealed class IniDocumentTests
             "IconFile=before.ico\r\n" +
             "IconIndex=7\r\n");
 
-        FolderColorState.Apply(document, folderWasReadOnly: false);
-        FolderColorState.Apply(document, folderWasReadOnly: true);
+        FolderColorState.Apply(
+            document,
+            folderWasReadOnly: false,
+            FolderColorState.GetIconFileName("red"));
+        FolderColorState.Apply(
+            document,
+            folderWasReadOnly: true,
+            FolderColorState.GetIconFileName("blue"));
         RestoreResult result = FolderColorState.Restore(document);
 
         Assert.False(result.FolderWasReadOnly);
@@ -68,4 +77,10 @@ public sealed class IniDocumentTests
         Assert.False(result.WasManaged);
         Assert.Equal("Keep me", document.GetValue(".ShellClassInfo", "InfoTip"));
     }
+
+    [Theory]
+    [InlineData("Red", ".foldercolorizer.red.ico")]
+    [InlineData("blue", ".foldercolorizer.blue.ico")]
+    public void GetIconFileNameCreatesStableCacheKey(string colorId, string expected) =>
+        Assert.Equal(expected, FolderColorState.GetIconFileName(colorId));
 }

@@ -6,7 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>FolderColorizer</AssemblyName>
     <RootNamespace>FolderColorizer</RootNamespace>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Daniil Zharikov</Authors>
     <Product>Folder Colorizer</Product>
     <Description>Beautiful color-coded folders for Windows Explorer.</Description>

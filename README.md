@@ -28,7 +28,7 @@ No Explorer extension DLL is injected into the shell process.
 
 ## Install
 
-Download `FolderColorizer-1.0.1-Setup.exe` from
+Download `FolderColorizer-1.0.2-Setup.exe` from
 [Releases](https://github.com/dszharikov/FolderColorizer/releases) and run it.
 The installer is per-user and does not require administrator rights.
 
@@ -59,8 +59,8 @@ Every pushed `v*` tag also creates a GitHub release and attaches the installer
 automatically.
 
 ```powershell
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 To try the context menu from a development build:
@@ -77,7 +77,9 @@ The app uses the documented Windows `desktop.ini` folder customization
 mechanism. It:
 
 1. generates a polished ICO containing ten resolutions from 16 to 256 pixels;
-2. stores it as hidden `.foldercolorizer.ico` in the selected folder;
+2. stores it under a hidden color-specific name such as
+   `.foldercolorizer.blue.ico`, preventing stale icons in Explorer's
+   per-size cache;
 3. updates only the icon values in `desktop.ini`, preserving unrelated data;
 4. marks the folder as read-only so Explorer processes its customization;
 5. notifies Windows Shell that the item changed.

@@ -14,20 +14,30 @@ public static class FolderCustomizationService
         ArgumentNullException.ThrowIfNull(color);
         string folder = ValidateFolder(folderPath);
         string desktopIniPath = Path.Combine(folder, DesktopIniName);
-        string iconPath = Path.Combine(folder, FolderColorState.IconFileName);
+        string iconFileName = FolderColorState.GetIconFileName(color.Id);
+        string iconPath = Path.Combine(folder, iconFileName);
 
         FileAttributes folderAttributes = File.GetAttributes(folder);
         bool folderWasReadOnly = folderAttributes.HasFlag(FileAttributes.ReadOnly);
         IniDocument document = ReadDesktopIni(desktopIniPath);
-        FolderColorState.Apply(document, folderWasReadOnly);
+        FolderColorState.Apply(document, folderWasReadOnly, iconFileName);
 
-        WriteFileAtomically(iconPath, IconGenerator.Create(color));
-        SetHiddenSystemAttributes(iconPath);
-        WriteDesktopIni(desktopIniPath, document);
-        SetHiddenSystemAttributes(desktopIniPath);
+        File.SetAttributes(folder, folderAttributes & ~FileAttributes.ReadOnly);
+        try
+        {
+            WriteFileAtomically(iconPath, IconGenerator.Create(color));
+            SetHiddenSystemAttributes(iconPath);
+            WriteDesktopIni(desktopIniPath, document);
+            SetHiddenSystemAttributes(desktopIniPath);
+        }
+        finally
+        {
+            File.SetAttributes(folder, folderAttributes | FileAttributes.ReadOnly);
+        }
 
-        File.SetAttributes(folder, folderAttributes | FileAttributes.ReadOnly);
+        DeleteManagedIcons(folder, iconPath);
         ShellNotifier.FolderChanged(folder);
+        ExplorerWindowRefresher.RefreshAll();
     }
 
     public static bool Reset(string folderPath)
@@ -46,24 +56,32 @@ public static class FolderCustomizationService
             return false;
         }
 
-        if (document.HasValues())
-        {
-            WriteDesktopIni(desktopIniPath, document);
-            SetHiddenSystemAttributes(desktopIniPath);
-        }
-        else
-        {
-            DeleteFileIgnoringAttributes(desktopIniPath);
-        }
-
-        DeleteFileIgnoringAttributes(Path.Combine(folder, FolderColorState.IconFileName));
-
         FileAttributes attributes = File.GetAttributes(folder);
-        attributes = result.FolderWasReadOnly
-            ? attributes | FileAttributes.ReadOnly
-            : attributes & ~FileAttributes.ReadOnly;
-        File.SetAttributes(folder, attributes);
+        File.SetAttributes(folder, attributes & ~FileAttributes.ReadOnly);
+        try
+        {
+            if (document.HasValues())
+            {
+                WriteDesktopIni(desktopIniPath, document);
+                SetHiddenSystemAttributes(desktopIniPath);
+            }
+            else
+            {
+                DeleteFileIgnoringAttributes(desktopIniPath);
+            }
+
+            DeleteManagedIcons(folder, keepPath: null);
+        }
+        finally
+        {
+            attributes = result.FolderWasReadOnly
+                ? attributes | FileAttributes.ReadOnly
+                : attributes & ~FileAttributes.ReadOnly;
+            File.SetAttributes(folder, attributes);
+        }
+
         ShellNotifier.FolderChanged(folder);
+        ExplorerWindowRefresher.RefreshAll();
         return true;
     }
 
@@ -153,5 +171,25 @@ public static class FolderCustomizationService
         FileAttributes attributes = File.GetAttributes(path);
         attributes &= ~(FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReadOnly);
         File.SetAttributes(path, attributes);
+    }
+
+    private static void DeleteManagedIcons(string folder, string? keepPath)
+    {
+        var candidates = Directory.EnumerateFiles(
+                folder,
+                $"{FolderColorState.IconFilePrefix}*{FolderColorState.IconFileSuffix}",
+                SearchOption.TopDirectoryOnly)
+            .Append(Path.Combine(folder, FolderColorState.LegacyIconFileName));
+
+        foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (keepPath is not null &&
+                candidate.Equals(keepPath, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            DeleteFileIgnoringAttributes(candidate);
+        }
     }
 }

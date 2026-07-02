@@ -48,8 +48,8 @@
             <Setter Property="Height" Value="76" />
             <Setter Property="Margin" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#27324A" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Template">
@@ -57,20 +57,23 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="ColorBorder"
                                 Background="{TemplateBinding Background}"
+                                BorderBrush="#D8DEEA"
+                                BorderThickness="1"
                                 RenderTransformOrigin="0.5,0.5"
                                 CornerRadius="13">
                             <Grid>
                                 <Rectangle Margin="1"
                                            RadiusX="12"
                                            RadiusY="12"
-                                           Stroke="#28FFFFFF"
-                                           StrokeThickness="1" />
+                                           Opacity="0.58"
+                                           Stroke="{TemplateBinding BorderBrush}"
+                                           StrokeThickness="2" />
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path Width="28"
-                                          Height="22"
-                                          Margin="0,0,0,5"
+                                    <Path Width="34"
+                                          Height="27"
+                                          Margin="0,0,0,6"
                                           Stretch="Fill"
-                                          Fill="#EEFFFFFF"
+                                          Fill="{Binding Hex}"
                                           Data="M1,5 C1,3 2,2 4,2 L11,2 L14,5 L24,5 C26,5 27,6 27,8 L27,19 C27,21 26,22 24,22 L4,22 C2,22 1,21 1,19 Z" />
                                     <ContentPresenter HorizontalAlignment="Center" />
                                 </StackPanel>
@@ -78,6 +81,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ColorBorder" Property="Background" Value="#F8FAFD" />
                                 <Setter TargetName="ColorBorder" Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="1.035" ScaleY="1.035" />
@@ -85,9 +89,10 @@
                                 </Setter>
                                 <Setter TargetName="ColorBorder" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect BlurRadius="15"
-                                                          ShadowDepth="3"
-                                                          Opacity="0.24" />
+                                        <DropShadowEffect BlurRadius="13"
+                                                          ShadowDepth="2"
+                                                          Color="#52627A"
+                                                          Opacity="0.2" />
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -164,7 +169,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Background="{Binding Hex}"
+                            <Button BorderBrush="{Binding Hex}"
                                     Click="ColorButton_Click"
                                     Content="{Binding DisplayName}"
                                     Style="{StaticResource ColorButton}"

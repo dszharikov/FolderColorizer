@@ -1,3 +1,4 @@
+using System.IO;
 using FolderColorizer.Services;
 using Microsoft.Win32;
 using Xunit;
@@ -15,7 +16,8 @@ public sealed class ContextMenuRegistrarTests
         try
         {
             const string executablePath = @"C:\Program Files\Folder Colorizer\FolderColorizer.exe";
-            ContextMenuRegistrar.WriteRegistration(testRoot, executablePath);
+            const string iconDirectory = @"C:\ProgramData\Folder Colorizer\MenuIcons\1.0.2";
+            ContextMenuRegistrar.WriteRegistration(testRoot, executablePath, iconDirectory);
 
             using RegistryKey parent = testRoot.OpenSubKey(
                 @"Directory\shell\FolderColorizer",
@@ -31,9 +33,23 @@ public sealed class ContextMenuRegistrarTests
             using RegistryKey redCommand = commands.OpenSubKey(
                 @"01.red\command",
                 false) ?? throw new InvalidOperationException("Red command was not created.");
+            using RegistryKey red = commands.OpenSubKey(
+                "01.red",
+                false) ?? throw new InvalidOperationException("Red menu was not created.");
+            using RegistryKey blue = commands.OpenSubKey(
+                "08.blue",
+                false) ?? throw new InvalidOperationException("Blue menu was not created.");
+
             Assert.Equal(
                 $"\"{executablePath}\" --color red \"%1\"",
                 redCommand.GetValue(null));
+            Assert.Equal(
+                $"\"{Path.Combine(iconDirectory, "red.ico")}\",0",
+                red.GetValue("Icon"));
+            Assert.Equal(
+                $"\"{Path.Combine(iconDirectory, "blue.ico")}\",0",
+                blue.GetValue("Icon"));
+            Assert.NotEqual(red.GetValue("Icon"), blue.GetValue("Icon"));
         }
         finally
         {
