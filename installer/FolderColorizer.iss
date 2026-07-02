@@ -1,5 +1,5 @@
 #define AppName "Folder Colorizer"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppPublisher "Daniil Zharikov"
 #define AppExeName "FolderColorizer.exe"
 
@@ -24,6 +24,7 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 SetupLogging=yes
+SetupIconFile=..\src\FolderColorizer\Assets\AppIcon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 CloseApplications=yes
 RestartApplications=no

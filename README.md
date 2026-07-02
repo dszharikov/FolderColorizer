@@ -1,5 +1,9 @@
 # Folder Colorizer
 
+<p align="center">
+  <img src="src/FolderColorizer/Assets/AppIcon.png" alt="Folder Colorizer icon" width="150">
+</p>
+
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4)
 ![License](https://img.shields.io/github/license/dszharikov/FolderColorizer)
@@ -24,7 +28,7 @@ No Explorer extension DLL is injected into the shell process.
 
 ## Install
 
-Download `FolderColorizer-1.0.0-Setup.exe` from
+Download `FolderColorizer-1.0.1-Setup.exe` from
 [Releases](https://github.com/dszharikov/FolderColorizer/releases) and run it.
 The installer is per-user and does not require administrator rights.
 
@@ -55,8 +59,8 @@ Every pushed `v*` tag also creates a GitHub release and attaches the installer
 automatically.
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 To try the context menu from a development build:

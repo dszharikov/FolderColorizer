@@ -5,8 +5,10 @@ namespace FolderColorizer.Services;
 
 internal static class ContextMenuRegistrar
 {
-    private const string DirectoryMenuKey = @"Software\Classes\Directory\shell\FolderColorizer";
-    private const string SubCommandsKey = DirectoryMenuKey + @"\ExtendedSubCommandsKey\shell";
+    private const string ClassesRootKey = @"Software\Classes";
+    private const string DirectoryMenuKey = @"Directory\shell\FolderColorizer";
+    private const string SubCommandsKey = DirectoryMenuKey + @"\shell";
+    private const string ObsoleteContextMenuClassKey = "FolderColorizer.ContextMenu";
     private const string LegacyCommandStoreRoot =
         @"Software\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell";
 
@@ -14,14 +16,35 @@ internal static class ContextMenuRegistrar
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
         string fullPath = Path.GetFullPath(executablePath);
-        string icon = $"\"{fullPath}\",0";
+        using RegistryKey classesRoot = Registry.CurrentUser.CreateSubKey(ClassesRootKey, true);
+        WriteRegistration(classesRoot, fullPath);
         DeleteLegacyCommandStoreCommands();
-        CreateParentMenu(DirectoryMenuKey, icon);
+        ShellNotifier.AssociationsChanged();
+    }
+
+    public static void Unregister()
+    {
+        using RegistryKey classesRoot = Registry.CurrentUser.CreateSubKey(ClassesRootKey, true);
+        DeleteRegistration(classesRoot);
+        DeleteLegacyCommandStoreCommands();
+        ShellNotifier.AssociationsChanged();
+    }
+
+    internal static void WriteRegistration(RegistryKey classesRoot, string executablePath)
+    {
+        ArgumentNullException.ThrowIfNull(classesRoot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
+
+        string fullPath = Path.GetFullPath(executablePath);
+        string icon = $"\"{fullPath}\",0";
+        DeleteRegistration(classesRoot);
+        CreateParentMenu(classesRoot, DirectoryMenuKey, icon);
 
         for (int index = 0; index < FolderPalette.All.Count; index++)
         {
             FolderColor color = FolderPalette.All[index];
             CreateCommand(
+                classesRoot,
                 $"{index + 1:D2}.{color.Id}",
                 color.DisplayName,
                 icon,
@@ -30,6 +53,7 @@ internal static class ContextMenuRegistrar
         }
 
         CreateCommand(
+            classesRoot,
             "99.reset",
             "Restore default",
             icon,
@@ -37,21 +61,26 @@ internal static class ContextMenuRegistrar
             separatorBefore: true);
     }
 
-    public static void Unregister()
+    internal static void DeleteRegistration(RegistryKey classesRoot)
     {
-        Registry.CurrentUser.DeleteSubKeyTree(DirectoryMenuKey, false);
-        DeleteLegacyCommandStoreCommands();
+        ArgumentNullException.ThrowIfNull(classesRoot);
+        classesRoot.DeleteSubKeyTree(DirectoryMenuKey, false);
+        classesRoot.DeleteSubKeyTree(ObsoleteContextMenuClassKey, false);
     }
 
-    private static void CreateParentMenu(string keyPath, string icon)
+    private static void CreateParentMenu(
+        RegistryKey classesRoot,
+        string keyPath,
+        string icon)
     {
-        using RegistryKey key = Registry.CurrentUser.CreateSubKey(keyPath, true);
+        using RegistryKey key = classesRoot.CreateSubKey(keyPath, true);
         key.SetValue("MUIVerb", "Folder Colorizer");
         key.SetValue("Icon", icon);
-        key.SetValue("Position", "Top");
+        key.SetValue("SubCommands", string.Empty);
     }
 
     private static void CreateCommand(
+        RegistryKey classesRoot,
         string id,
         string displayName,
         string icon,
@@ -59,7 +88,7 @@ internal static class ContextMenuRegistrar
         bool separatorBefore)
     {
         string keyPath = $@"{SubCommandsKey}\{id}";
-        using RegistryKey key = Registry.CurrentUser.CreateSubKey(keyPath, true);
+        using RegistryKey key = classesRoot.CreateSubKey(keyPath, true);
         key.SetValue("MUIVerb", displayName);
         key.SetValue("Icon", icon);
 
