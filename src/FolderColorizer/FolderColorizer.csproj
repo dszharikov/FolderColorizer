@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>FolderColorizer</AssemblyName>
+    <RootNamespace>FolderColorizer</RootNamespace>
+    <Version>1.0.0</Version>
+    <Authors>Daniil Zharikov</Authors>
+    <Product>Folder Colorizer</Product>
+    <Description>Beautiful color-coded folders for Windows Explorer.</Description>
+    <Copyright>Copyright © 2026 Daniil Zharikov</Copyright>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FolderColorizer.Core\FolderColorizer.Core.csproj" />
+  </ItemGroup>
+</Project>

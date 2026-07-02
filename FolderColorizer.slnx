@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/FolderColorizer.Core/FolderColorizer.Core.csproj" />
+  <Project Path="src/FolderColorizer/FolderColorizer.csproj" />
+  <Project Path="tests/FolderColorizer.Core.Tests/FolderColorizer.Core.Tests.csproj" />
+</Solution>
